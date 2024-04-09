@@ -1,0 +1,143 @@
+/* ////// Changelog /////
+	v0 	29.04.2021
+		STProcessing by Dennis Vettkötter
+		Opens videos with labels for Swimming Tracks Processing software
+*/
+
+Name = "STProcessing";
+requires("1.48v");
+dir = getDirectory("Choose a directory");
+closeAll();
+
+// Set variables
+fileType = ".avi";
+fileEnding = "";
+file = fileEnding+fileType;
+// uFile = ".AVI",
+count = 0;
+n = 0;
+j=0;
+
+
+// Execution of plugin
+print(Name);
+print ("Display tracks ... stand by");
+countFiles(dir);
+processFiles(dir);
+print("STProcessing finished!");	
+
+exit;
+
+ // Count all the files with the correct file-extension (with .avi and .AVI)
+function countFiles(dir) {
+	list = getFileList(dir);
+	for (i=0; i<list.length; i++) {
+		if (endsWith(list[i], "/")){
+			countFiles(""+dir+list[i]);
+		} 
+		else if (endsWith(list[i], file) || endsWith(list[i], uFile)) {
+			count++;
+		}
+	}
+}
+
+// Get list of files and process (with .avi and .AVI)
+function processFiles(dir) {
+	list = getFileList(dir);
+	for (i=0; i<list.length; i++) {
+		if (endsWith(list[i], "/")) {
+			processFiles(""+dir+list[i]);
+		} 
+		else if (endsWith(list[i], file) || endsWith(list[i], uFile)) { //matching is case sensitive and distinguishes between upper and lower case!!!
+			showProgress(n++, count);
+			path = dir+list[i];
+			validateFile(path);
+			} 
+		}
+	}
+}
+
+// Count all the files with the correct file-extension
+function countFiles(dir) {
+	list = getFileList(dir);
+	for (i=0; i<list.length; i++) {
+		if (endsWith(list[i], "/")){
+			countFiles(""+dir+list[i]);
+		} 
+		else if (endsWith(list[i], file)) {
+			count++;
+		}
+	}
+}
+
+// Get list of files and process
+function processFiles(dir) {
+	list = getFileList(dir);
+	for (i=0; i<list.length; i++) {
+		if (endsWith(list[i], "/")) {
+			processFiles(""+dir+list[i]);
+		} 
+		else if (endsWith(list[i], file)) {
+			showProgress(n++, count);
+			path = dir+list[i];
+			validateFile(path);
+			} 
+		}
+	}
+}
+
+
+// Display labeled videos for swimming tracks processing
+
+function validateFile(path) {
+	dotIndex = lastIndexOf(path, ".");
+	endingIndex = lastIndexOf(path, fileEnding);
+	filelist = getFileList(dir);
+	if (dotIndex!=-1) {
+		fileType = substring(path, dotIndex, dotIndex+4);
+		if (fileEnding != ""){
+			path = substring(path, 0, endingIndex); // remove fileType and fileEnding
+		} else {
+			path = substring(path, 0, dotIndex); // remove fileType and fileEnding
+		}
+	} 
+	if (!endsWith(path, "_labels_compressed") && !endsWith(path, "_corrected") && !endsWith(path, "_tracks")){ // do not open other files than the original when fileEnding==""
+		print("Open "+path+fileType+"");
+		if (file!="_labels_compressed.avi" || file!="_corrected.txt" || file!="_tracks.txt" || file!="_labels_compressed.AVI" || file!="_corrected.TXT" || file!="_tracks.TXT"){ // do not open the labels_compressed and the txt-file with all tracks when specified in fileEnding, since they get opened every time with the later command
+			if (fileType==".zip" || fileType==".txt" || fileType==".png" || fileType==".ZIP" || fileType==".TXT" || fileType==".PNG"){
+				run("Open...", "open=["+path+fileType+"]");
+				if (fileType==".txt" || fileType==".TXT"){
+					txtTitel=getInfo("window.title");
+				}
+			} else if (fileType==".avi" || fileType==".AVI") {
+				run("AVI...", "open=["+path+fileType+"] use convert"); //opens the original .avi file
+			}
+		}
+		if (File.exists(path+"_labels_compressed.avi")){
+			run("AVI...", "open=["+path+"_labels_compressed.avi] use convert"); //opens the compressed labels .avi file
+		} else if (File.exists(path+"_labels_compressed.AVI")){
+			run("AVI...", "open=["+path+"_labels_compressed.AVI] use convert"); //opens the compressed labels .avi file
+		}
+		txtTitel2=getInfo("window.title");
+		name=filelist[i];
+		dotIndex = indexOf(name, ".");
+		basename = substring(name, 0, dotIndex);
+		waitForUser("STProcessing", "Process your tracks with\n'Swimming Tracks Processing'.\nClick \"OK\" to continue");
+		if (fileType==".txt" || fileType==".TXT"){
+			close(txtTitel);
+		}
+		closeAll();
+	}
+}
+
+	
+// Function to close all images
+function closeAll () {
+	while (nImages>0) { 
+		selectImage(nImages); 
+		close(); 
+	}
+	//run("Reset...", "reset=[Undo Buffer]"); 
+	//run("Reset...", "reset=[Locked Image]");
+	call("java.lang.System.gc");
+}
